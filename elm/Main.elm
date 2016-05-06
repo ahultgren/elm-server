@@ -1,12 +1,42 @@
 module Server (..) where
 
 import Signal
+import Dict exposing (Dict)
 
-port incoming : Signal (String, Int)
+-- Types
 
-port outgoing : Signal (String, Int)
-port outgoing = Signal.map addOne incoming
+type alias Url =
+  { href : String
+  , auth : Maybe String
+  , pathname : String
+  , search : String
+  , path : String
+  -- , query : Dict String String -- need dict support
+  }
 
-addOne : (String, Int) -> (String, Int)
-addOne (id, x) =
-  (id, x + 1)
+type alias Request =
+  { id : String
+  , method : String
+  , url : Url
+  -- , headers : Dict String String -- need dict support
+  }
+
+type alias Response =
+  { id : String
+  , body : String
+  }
+
+
+-- Ports
+
+port request : Signal Request
+
+port response : Signal Response
+port response = Signal.map router request
+
+
+router : Request -> Response
+router req =
+  { id = req.id
+  , body = req.url.path
+  }

@@ -1,26 +1,47 @@
 'use strict';
 
 const http = require('http');
-const url = require('url');
+const Url = require('url');
 const uuid = require('uuid');
 
 const Elm = require('../dist/elm.js');
 
+const simpleUrl = (url) => {
+  const urlObject = Url.parse(url, true);
+
+  return {
+    href: urlObject.href,
+    auth: urlObject.auth,
+    pathname: urlObject.pathname,
+    search: urlObject.search,
+    path: urlObject.path,
+    // query: urlObject.query, need dict support
+  };
+};
+
 module.exports = (env) => {
-  var reqs = {};
-  var i = 0;
-  var elmServer = Elm.worker(Elm.Server, {
-    incoming: ['0', 0],
+  const reqs = {};
+
+  const elmServer = Elm.worker(Elm.Server, {
+    request: {id: '', method: '', url: simpleUrl('/')},
   });
 
-  elmServer.ports.outgoing.subscribe((x) => {
-    reqs[x[0]].res.write(String(x[1]));
-    reqs[x[0]].res.end();
+  elmServer.ports.response.subscribe((response) => {
+    reqs[response.id].res.write(String(response.body));
+    reqs[response.id].res.end();
   });
 
+  let i = 0;
   return http.createServer((req, res) => {
-    var id = uuid.v4();
+    const id = uuid.v4();
+    const simpleReq = {
+      id,
+      method: req.method,
+      url: simpleUrl(req.url),
+    };
+
     reqs[id] = {req, res};
-    elmServer.ports.incoming.send([id, i++]);
+    console.log(simpleReq);
+    elmServer.ports.request.send(simpleReq);
   });
 };
