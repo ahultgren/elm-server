@@ -2,30 +2,9 @@ module Server (..) where
 
 import Signal exposing (Mailbox, mailbox)
 import Task exposing (Task, andThen, onError)
-import Dict exposing (Dict)
-
--- Types
-
-type alias Url =
-  { href : String
-  , auth : Maybe String
-  , pathname : String
-  , search : String
-  , path : String
-  -- , query : Dict String String -- need dict support
-  }
-
-type alias Request =
-  { id : String
-  , method : String
-  , url : Url
-  -- , headers : Dict String String -- need dict support
-  }
-
-type alias Response =
-  { id : String
-  , body : String
-  }
+import Types exposing (Routes, Route, Request, Response, Params)
+import Router
+import Utils exposing (createResponse)
 
 
 -- Mailboxes
@@ -53,20 +32,25 @@ port temp = Signal.map router request
 -- Controllers
 
 router : Request -> Task () ()
-router req =
-  case req.url.path of
-    _ -> getArticle "test"
-      `andThen` (\article -> send (createResponse req article))
+router =
+  Router.create
+    [ ("/", start)
+    ]
+    end
+
+
+end : Task () Response -> Task () ()
+end responseTask =
+  responseTask `andThen` (\response -> send response)
+
+
+start : Request -> Params -> Task () Response
+start req params =
+  Task.succeed "asdasd"
+    `andThen` (\article -> Task.succeed (createResponse req article))
 
 
 getArticle : String -> Task () String
 getArticle id =
   -- TODO Get real article
   Task.succeed ("test article: " ++ id)
-
-
-createResponse : Request -> String -> Response
-createResponse req body =
-  { id = req.id
-  , body = body
-  }
