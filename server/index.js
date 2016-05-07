@@ -4,6 +4,7 @@ const http = require('http');
 const Url = require('url');
 const uuid = require('uuid');
 
+global.window = global;
 const Elm = require('../dist/elm.js');
 
 const simpleUrl = (url) => {
@@ -27,6 +28,10 @@ module.exports = (env) => {
   });
 
   elmServer.ports.response.subscribe((response) => {
+    if(!reqs[response.id]) {
+      // TODO A specific noop-type for the initial bullshit event
+      return;
+    }
     reqs[response.id].res.write(String(response.body));
     reqs[response.id].res.end();
   });
