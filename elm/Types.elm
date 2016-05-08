@@ -2,6 +2,7 @@ module Types (..) where
 
 import Dict exposing (Dict)
 import Task exposing (Task)
+import Http
 
 -- TODO This feels like the wrong way to structure things...
 
@@ -37,3 +38,6 @@ type alias Routes =
 
 type alias Router =
   Request -> Task () ()
+
+type RequestError =
+  HttpError Http.Error | ParamError String

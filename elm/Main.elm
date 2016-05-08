@@ -2,9 +2,11 @@ module Server (..) where
 
 import Signal exposing (Mailbox, mailbox)
 import Task exposing (Task, andThen, onError)
-import Types exposing (Routes, Route, Request, Response, Params)
+import Types exposing (Routes, Route, Request, Response, Params, RequestError)
+import Dict
 import Router
 import Utils exposing (createResponse)
+import Http
 
 
 -- Mailboxes
@@ -35,6 +37,7 @@ router : Request -> Task () ()
 router =
   Router.create
     [ ("/", start)
+    , ("/a/{article_id}", article)
     ]
     end
 
@@ -46,11 +49,24 @@ end responseTask =
 
 start : Request -> Params -> Task () Response
 start req params =
-  Task.succeed "asdasd"
-    `andThen` (\article -> Task.succeed (createResponse req article))
+  Task.succeed (createResponse req "start")
 
 
-getArticle : String -> Task () String
+article : Request -> Params -> Task () Response
+article req params =
+  getArticle (Dict.get "article_id" params)
+  `andThen` (\article -> Task.succeed (createResponse req article))
+  `onError` (\_ -> Task.succeed (createResponse req "404"))
+
+
+apiBase : String
+apiBase =
+  "http://api.omni.se/v2"
+
+
+getArticle : Maybe String -> Task RequestError String
 getArticle id =
-  -- TODO Get real article
-  Task.succeed ("test article: " ++ id)
+  case id of
+    Nothing -> Task.fail (Types.ParamError "No such article")
+    Just id -> Http.get (apiBase ++ "/articles/" ++ id)
+      |> Task.mapError Types.HttpError
