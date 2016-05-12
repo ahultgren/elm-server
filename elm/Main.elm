@@ -3,6 +3,8 @@ port module Server exposing (..)
 
 import Html.App exposing (program)
 import Html exposing (Html, text)
+import Task
+
 import Utils exposing (createResponse)
 import Types exposing (Request, Response)
 
@@ -20,17 +22,20 @@ main =
     }
 
 
-router : Request -> Response
+router : Request -> Cmd Response
 router req =
-  createResponse req req.url.path
+  Task.perform
+    (\_ -> createResponse req "500")
+    identity
+    (Task.succeed (createResponse req req.url.path))
 
 
-update : Response -> Model -> (Model, Cmd Response)
+update : Cmd Response -> Model -> (Model, Cmd (Cmd Response))
 update res model =
-  (model, response res)
+  (model, Cmd.map response res)
 
 
-subscriptions : Model -> Sub Response
+subscriptions : Model -> Sub (Cmd Response)
 subscriptions model =
   request router
 
@@ -43,6 +48,6 @@ type alias Model = ()
 model : Model
 model = ()
 
-view : Model -> Html Response
+view : Model -> Html a
 view model =
   text "serisously wtf?"
