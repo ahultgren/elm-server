@@ -1,4 +1,4 @@
-module Utils (..) where
+module Utils exposing (..)
 
 import Types exposing (Request, Response)
 

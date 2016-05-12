@@ -1,4 +1,4 @@
-module Types (..) where
+module Types exposing (..)
 
 import Dict exposing (Dict)
 import Task exposing (Task)

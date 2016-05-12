@@ -1,72 +1,48 @@
-module Server (..) where
+port module Server exposing (..)
 
-import Signal exposing (Mailbox, mailbox)
-import Task exposing (Task, andThen, onError)
-import Types exposing (Routes, Route, Request, Response, Params, RequestError)
-import Dict
-import Router
+
+import Html.App exposing (program)
+import Html exposing (Html, text)
 import Utils exposing (createResponse)
-import Http
+import Types exposing (Request, Response)
 
 
--- Mailboxes
-
-responseMailbox : Mailbox Response
-responseMailbox = mailbox {id = "", body = ""}
+port request : (Request -> msg) -> Sub msg
+port response : Response -> Cmd msg
 
 
-send : Response -> Task x ()
-send =
-  Signal.send responseMailbox.address
+main =
+  program
+    { init = (model, Cmd.none)
+    , view = view
+    , update = update
+    , subscriptions = subscriptions
+    }
 
 
--- Ports
-
-port request : Signal Request
-
-port response : Signal Response
-port response = responseMailbox.signal
-
-port temp : Signal (Task () ())
-port temp = Signal.map router request
+router : Request -> Response
+router req =
+  createResponse req req.url.path
 
 
--- Controllers
-
-router : Request -> Task () ()
-router =
-  Router.create
-    [ ("/", start)
-    , ("/a/{article_id}", article)
-    ]
-    end
+update : Response -> Model -> (Model, Cmd Response)
+update res model =
+  (model, response res)
 
 
-end : Task () Response -> Task () ()
-end responseTask =
-  responseTask `andThen` (\response -> send response)
+subscriptions : Model -> Sub Response
+subscriptions model =
+  request router
 
 
-start : Request -> Params -> Task () Response
-start req params =
-  Task.succeed (createResponse req "start")
+--------------------
+-- Bullshit stuff --
+--------------------
 
+type alias Model = ()
+model : Model
+model = ()
 
-article : Request -> Params -> Task () Response
-article req params =
-  getArticle (Dict.get "article_id" params)
-  `andThen` (\article -> Task.succeed (createResponse req article))
-  `onError` (\_ -> Task.succeed (createResponse req "404"))
-
-
-apiBase : String
-apiBase =
-  "http://api.omni.se/v2"
-
-
-getArticle : Maybe String -> Task RequestError String
-getArticle id =
-  case id of
-    Nothing -> Task.fail (Types.ParamError "No such article")
-    Just id -> Http.get (apiBase ++ "/articles/" ++ id)
-      |> Task.mapError Types.HttpError
+view : Model -> Html Response
+view model =
+  text "serisously wtf?"
