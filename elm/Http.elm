@@ -1,5 +1,5 @@
 module Http
-  exposing ( Error(..), Request, Response
+  exposing ( Error(..), get
   )
 
 -- Borrowed from https://github.com/ElmCast/elm-node/blob/master/src/Http.elm
@@ -7,24 +7,19 @@ module Http
 {-|
 
 @docs Error
-@docs get, serve, getURL, sendResponse
 
 -}
 
 import Task exposing (Task)
 
--- import Native.Http
+import Native.Http
 
 {-| Error
 -}
 type Error = NetworkError String
 
-
-{-| Request
+{-| get
 -}
-type Request = Request
-
-
-{-| Response
--}
-type Response = Response
+get : String -> Task Error String
+get url =
+  Native.Http.get url
