@@ -3,10 +3,11 @@ port module Server exposing (..)
 
 import Html.App exposing (program)
 import Html exposing (Html, text)
-import Task
+import Task exposing (Task)
 
 import Utils exposing (createResponse)
-import Types exposing (Request, Response)
+import Types exposing (Request, Response, Params)
+import Router
 
 
 port request : (Request -> msg) -> Sub msg
@@ -23,11 +24,24 @@ main =
 
 
 router : Request -> Cmd Response
-router req =
+router =
+  Router.create
+    [ ("/", start)
+    ]
+    end
+
+
+start : Request -> Params -> Task () Response
+start req params =
+  Task.succeed (createResponse req "welcome!")
+
+
+end : Task () Response -> Cmd Response
+end resTask =
   Task.perform
-    (\_ -> createResponse req "500")
+    (\_ -> Response "?" "fuck")
     identity
-    (Task.succeed (createResponse req req.url.path))
+    resTask
 
 
 update : Cmd Response -> Model -> (Model, Cmd (Cmd Response))

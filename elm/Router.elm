@@ -1,4 +1,4 @@
-module Router (..) where
+module Router exposing (..)
 
 import Dict exposing (Dict)
 import Regex exposing (Regex, regex)
@@ -7,7 +7,7 @@ import Types exposing (Routes, Route, Router, Request, Response, Params)
 import Utils exposing (createResponse)
 
 
-create : Routes -> (Task () Response -> Task () ()) -> Router
+create : Routes -> (Task () Response -> Cmd Response) -> Router
 create routes end req =
   List.filter (matchRoute req << fst) routes
     |> List.head

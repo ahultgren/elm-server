@@ -1,6 +1,6 @@
 module Http
-  ( Error(..), get, serve, getURL, sendResponse, Request, Response
-  ) where
+  exposing ( Error(..), Request, Response
+  )
 
 -- Borrowed from https://github.com/ElmCast/elm-node/blob/master/src/Http.elm
 
@@ -13,7 +13,7 @@ module Http
 
 import Task exposing (Task)
 
-import Native.Http
+-- import Native.Http
 
 {-| Error
 -}
@@ -28,31 +28,3 @@ type Request = Request
 {-| Response
 -}
 type Response = Response
-
-
-{-| get
--}
-get : String -> Task Error String
-get url =
-  Native.Http.get url
-
-
-{-| serve
--}
-serve : Int -> (Request -> Response -> Task x a) -> Task x ()
-serve prt taskFunction =
-  Native.Http.serve prt taskFunction
-
-
-{-| getURL
--}
-getURL : Request -> String
-getURL =
-  Native.Http.get_url
-
-
-{-| sendResponse
--}
-sendResponse : Response -> String -> Task x ()
-sendResponse response s =
-  Task.succeed <| Native.Http.response_end response s

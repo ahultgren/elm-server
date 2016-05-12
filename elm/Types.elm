@@ -37,7 +37,7 @@ type alias Routes =
   List Route
 
 type alias Router =
-  Request -> Task () ()
+  Request -> Cmd Response
 
 type RequestError =
   HttpError Http.Error | ParamError String
