@@ -2,7 +2,6 @@
 
 const http = require('http');
 const Url = require('url');
-const uuid = require('uuid');
 
 const Elm = require('../dist/elm.js');
 
@@ -19,10 +18,21 @@ const simpleUrl = (url) => {
   };
 };
 
+const idGenerator = function* () {
+  var id = 0;
+  while (true) {
+    if(id >= Number.MAX_SAFE_INTEGER) {
+      id = 0;
+    }
+    yield String(id++);
+  }
+};
+
 module.exports = (env) => {
   const elmServer = Elm.Server.worker();
-
   const reqs = {};
+  const generateId = idGenerator();
+
   elmServer.ports.response.subscribe((response) => {
     if(!reqs[response.id]) {
       // TODO A specific noop-type for the initial bullshit event
@@ -31,10 +41,11 @@ module.exports = (env) => {
     reqs[response.id].res.setHeader('Content-Type', 'application/json; charset=utf-8');
     reqs[response.id].res.write(String(response.body));
     reqs[response.id].res.end();
+    delete reqs[response.id];
   });
 
   return http.createServer((req, res) => {
-    const id = uuid.v4();
+    const id = generateId.next().value;
     const simpleReq = {
       id,
       method: req.method,
