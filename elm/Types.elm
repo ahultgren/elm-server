@@ -15,15 +15,17 @@ type alias Url =
   -- , query : Dict String String -- need dict support
   }
 
+type alias RequestId = String
+
 type alias Request =
-  { id : String
+  { id : RequestId
   , method : String
   , url : Url
   -- , headers : Dict String String -- need dict support
   }
 
 type alias Response =
-  { id : String
+  { id : RequestId
   , body : String
   }
 
@@ -37,7 +39,7 @@ type alias Routes =
   List Route
 
 type alias Router =
-  Request -> Cmd Response
+  Request -> Task () Response
 
 type RequestError =
   HttpError Http.Error | ParamError String

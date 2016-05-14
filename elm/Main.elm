@@ -7,7 +7,7 @@ import Task exposing (Task, andThen, onError)
 import Dict
 
 import Utils exposing (createResponse)
-import Types exposing (Request, Response, Params, RequestError)
+import Types exposing (Request, Response, Params, RequestError, RequestId, Router)
 import Router
 import Http
 
@@ -25,21 +25,24 @@ main =
     }
 
 
-router : Request -> Cmd Response
+handleRequest : Request -> Cmd Response
+handleRequest req =
+  router req
+    |> Task.perform (fail req.id) identity
+
+
+router : Router
 router =
   Router.create
     [ ("/", start)
     , ("/a/{article_id}", article)
+    , (".*", notFound)
     ]
-    end
 
 
-end : Task () Response -> Cmd Response
-end resTask =
-  Task.perform
-    (\_ -> Response "?" "fuck")
-    identity
-    resTask
+fail : RequestId -> x -> Response
+fail id error =
+  Response id "500"
 
 
 start : Request -> Params -> Task () Response
@@ -52,6 +55,11 @@ article req params =
   getArticle (Dict.get "article_id" params)
   `andThen` (\article -> Task.succeed (createResponse req article))
   `onError` (\_ -> Task.succeed (createResponse req "404"))
+
+
+notFound : Request -> Params -> Task () Response
+notFound req params =
+  Task.succeed (Response req.id "custom 404")
 
 
 apiBase : String
@@ -74,7 +82,7 @@ update res model =
 
 subscriptions : Model -> Sub (Cmd Response)
 subscriptions model =
-  request router
+  request handleRequest
 
 
 --------------------
