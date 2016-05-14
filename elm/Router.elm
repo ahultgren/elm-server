@@ -3,11 +3,28 @@ module Router exposing (..)
 import Dict exposing (Dict)
 import Regex exposing (Regex, regex)
 import Task exposing (Task)
-import Types exposing (Routes, Route, Router, Request, Response, Params, RequestId)
+import Request exposing (Request, RequestId)
+import Response exposing (Response)
 
 
-create : Routes -> Router
-create routes req =
+type alias Router =
+  Request -> Task () Response
+
+type alias Routes =
+  List Route
+
+type alias Route =
+  (String, RouteHandler)
+
+type alias RouteHandler =
+  Request -> Params -> Task () Response
+
+type alias Params =
+  Dict String String
+
+
+router : Routes -> Router
+router routes req =
   List.filter (matchRoute req << fst) routes
     |> List.head
     |> doRoute req
@@ -39,14 +56,6 @@ doRoute req route =
     Just (pattern, callback) -> callback req (createParams req pattern)
 
 
-zip : List a -> List b -> List (a, b)
-zip = List.map2 (,)
-
-
-definitively : List (Maybe a) -> List a
-definitively = List.filterMap identity
-
-
 createParams : Request -> String -> Params
 createParams req pattern =
   let
@@ -56,3 +65,17 @@ createParams req pattern =
     values = definitively (List.concatMap .submatches (Regex.find Regex.All routeRegex req.url.path))
   in
     Dict.fromList (zip names values)
+
+
+-------------
+-- Helpers --
+-------------
+
+
+-- Prune all Nothings from a list of Maybe's
+definitively : List (Maybe a) -> List a
+definitively = List.filterMap identity
+
+
+zip : List a -> List b -> List (a, b)
+zip = List.map2 (,)

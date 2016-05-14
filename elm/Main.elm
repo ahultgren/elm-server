@@ -6,9 +6,14 @@ import Html exposing (Html, text)
 import Task exposing (Task, andThen, onError)
 import Dict
 
-import Types exposing (Request, Response, RequestError, RequestId, Router, RouteHandler)
-import Router
+import Request exposing (Request, RequestId)
+import Response exposing (Response)
+import Router exposing (Router, RouteHandler)
 import Http
+
+
+type RequestError =
+  HttpError Http.Error | ParamError String
 
 
 port request : (Request -> msg) -> Sub msg
@@ -32,7 +37,7 @@ handleRequest req =
 
 router : Router
 router =
-  Router.create
+  Router.router
     [ ("/", start)
     , ("/a/{article_id}", article)
     , (".*", notFound)
@@ -69,9 +74,9 @@ apiBase =
 getArticle : Maybe String -> Task RequestError String
 getArticle id =
   case id of
-    Nothing -> Task.fail (Types.ParamError "No such article")
+    Nothing -> Task.fail (ParamError "No such article")
     Just id -> Http.get (apiBase ++ "/articles/" ++ id)
-      |> Task.mapError Types.HttpError
+      |> Task.mapError HttpError
 
 
 update : Cmd Response -> Model -> (Model, Cmd (Cmd Response))
