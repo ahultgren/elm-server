@@ -32,8 +32,11 @@ type alias Response =
 type alias Params =
   Dict String String
 
+type alias RouteHandler =
+  Request -> Params -> Task () Response
+
 type alias Route =
-  (String, (Request -> Params -> Task () Response))
+  (String, RouteHandler)
 
 type alias Routes =
   List Route

@@ -6,8 +6,7 @@ import Html exposing (Html, text)
 import Task exposing (Task, andThen, onError)
 import Dict
 
-import Utils exposing (createResponse)
-import Types exposing (Request, Response, Params, RequestError, RequestId, Router)
+import Types exposing (Request, Response, RequestError, RequestId, Router, RouteHandler)
 import Router
 import Http
 
@@ -45,19 +44,19 @@ fail id error =
   Response id "500"
 
 
-start : Request -> Params -> Task () Response
+start : RouteHandler
 start req params =
-  Task.succeed (createResponse req "welcome!")
+  Task.succeed (Response req.id "welcome!")
 
 
-article : Request -> Params -> Task () Response
+article : RouteHandler
 article req params =
   getArticle (Dict.get "article_id" params)
-  `andThen` (\article -> Task.succeed (createResponse req article))
-  `onError` (\_ -> Task.succeed (createResponse req "404"))
+  `andThen` (\article -> Task.succeed (Response req.id article))
+  `onError` (\_ -> Task.succeed (Response req.id "404"))
 
 
-notFound : Request -> Params -> Task () Response
+notFound : RouteHandler
 notFound req params =
   Task.succeed (Response req.id "custom 404")
 

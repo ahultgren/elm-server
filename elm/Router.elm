@@ -4,7 +4,6 @@ import Dict exposing (Dict)
 import Regex exposing (Regex, regex)
 import Task exposing (Task)
 import Types exposing (Routes, Route, Router, Request, Response, Params, RequestId)
-import Utils exposing (createResponse)
 
 
 create : Routes -> Router
@@ -36,7 +35,7 @@ matchRoute req pattern =
 doRoute : Request -> Maybe Route -> Task () Response
 doRoute req route =
   case route of
-    Nothing -> Task.succeed (createResponse req "404")
+    Nothing -> Task.succeed (Response req.id "404")
     Just (pattern, callback) -> callback req (createParams req pattern)
 
 
