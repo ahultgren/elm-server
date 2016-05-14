@@ -34,10 +34,6 @@ module.exports = (env) => {
   const generateId = idGenerator();
 
   elmServer.ports.response.subscribe((response) => {
-    if(!reqs[response.id]) {
-      // TODO A specific noop-type for the initial bullshit event
-      return;
-    }
     reqs[response.id].res.setHeader('Content-Type', 'application/json; charset=utf-8');
     reqs[response.id].res.write(String(response.body));
     reqs[response.id].res.end();
