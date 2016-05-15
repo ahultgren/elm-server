@@ -1,11 +1,10 @@
-port module Server exposing (..)
+port module Example exposing (..)
 
 
-import Html.App exposing (program)
-import Html exposing (Html, text)
 import Task exposing (Task, andThen, onError)
 import Dict
 
+import Server
 import Request exposing (Request, RequestId)
 import Response exposing (Response, OutgoingResponse, toOutgoingResponse)
 import Router exposing (Router, RouteHandler)
@@ -21,12 +20,14 @@ port response : OutgoingResponse -> Cmd msg
 
 
 main =
-  program
-    { init = (model, Cmd.none)
-    , view = view
-    , update = update
-    , subscriptions = subscriptions
-    }
+  Server.start
+    update
+    (request handleRequest)
+
+
+update : Cmd OutgoingResponse -> model -> (model, Cmd (Cmd OutgoingResponse))
+update res model =
+  (model, Cmd.map response res)
 
 
 handleRequest : Request -> Cmd OutgoingResponse
@@ -82,26 +83,3 @@ getArticle id =
     Nothing -> Task.fail (ParamError "No such article")
     Just id -> Http.get (apiBase ++ "/articles/" ++ id)
       |> Task.mapError HttpError
-
-
-update : Cmd OutgoingResponse -> Model -> (Model, Cmd (Cmd OutgoingResponse))
-update res model =
-  (model, Cmd.map response res)
-
-
-subscriptions : Model -> Sub (Cmd OutgoingResponse)
-subscriptions model =
-  request handleRequest
-
-
---------------------
--- Bullshit stuff --
---------------------
-
-type alias Model = ()
-model : Model
-model = ()
-
-view : Model -> Html a
-view model =
-  text "serisously wtf?"

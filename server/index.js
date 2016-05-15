@@ -3,8 +3,6 @@
 const http = require('http');
 const Url = require('url');
 
-const Elm = require('../dist/elm.js');
-
 const simpleUrl = (url) => {
   const urlObject = Url.parse(url, true);
 
@@ -28,8 +26,8 @@ const idGenerator = function* () {
   }
 };
 
-module.exports = (env) => {
-  const elmServer = Elm.Server.worker();
+module.exports = (app, env) => {
+  const elmServer = app.worker();
   const reqs = {};
   const generateId = idGenerator();
 
