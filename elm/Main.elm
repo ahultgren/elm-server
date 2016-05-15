@@ -1,4 +1,4 @@
-port module Example exposing (..)
+module Example exposing (..)
 
 
 import Task exposing (Task, andThen, onError)
@@ -15,25 +15,13 @@ type RequestError =
   HttpError Http.Error | ParamError String
 
 
-port request : (Request -> msg) -> Sub msg
-port response : OutgoingResponse -> Cmd msg
-
-
 main =
-  Server.start
-    update
-    (request handleRequest)
+  Server.start handleRequest
 
 
-update : Cmd OutgoingResponse -> model -> (model, Cmd (Cmd OutgoingResponse))
-update res model =
-  (model, Cmd.map response res)
-
-
-handleRequest : Request -> Cmd OutgoingResponse
+handleRequest : Request -> Task Router.Error Response
 handleRequest req =
   router req
-    |> Task.perform (fail req.id) (success req.id)
 
 
 router : Router
@@ -43,16 +31,6 @@ router =
     , ("/a/{article_id}", article)
     , (".*", notFound)
     ]
-
-
-fail : RequestId -> x -> OutgoingResponse
-fail id error =
-  toOutgoingResponse id <| Response.ServerError "500" Nothing
-
-
-success : RequestId -> Response -> OutgoingResponse
-success id res =
-  toOutgoingResponse id res
 
 
 start : RouteHandler

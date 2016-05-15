@@ -8,7 +8,7 @@ import Response exposing (Response)
 
 
 type alias Router =
-  Request -> Task () Response
+  Request -> Task Error Response
 
 type alias Routes =
   List Route
@@ -17,7 +17,10 @@ type alias Route =
   (String, RouteHandler)
 
 type alias RouteHandler =
-  Request -> Params -> Task () Response
+  Request -> Params -> Task Error Response
+
+type alias Error =
+  String -- TODO More useful error type
 
 type alias Params =
   Dict String String
@@ -49,7 +52,7 @@ matchRoute req pattern =
 
 
 -- TODO ErrorRoute fallback? Error -> Route. And a way to create empty params
-doRoute : Request -> Maybe Route -> Task () Response
+doRoute : Request -> Maybe Route -> Task Error Response
 doRoute req route =
   case route of
     Nothing -> Task.succeed (Response.NotFound "404" Nothing)
