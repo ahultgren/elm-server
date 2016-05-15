@@ -4,7 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "elm-make source/Example/Main.elm  --output dist/elm.js",
+    "dev": "nodemon -w source -e 'elm' -x npm run build",
+    "devserver": "nodemon -w bin/ -w server/ -w dist/ -x foreman start"
   },
   "author": "Andreas Hultgren",
   "license": "ISC",
