@@ -7,7 +7,7 @@ import Task exposing (Task, andThen, onError)
 import Dict
 
 import Request exposing (Request, RequestId)
-import Response exposing (Response)
+import Response exposing (Response, OutgoingResponse, toOutgoingResponse)
 import Router exposing (Router, RouteHandler)
 import Http
 
@@ -17,7 +17,7 @@ type RequestError =
 
 
 port request : (Request -> msg) -> Sub msg
-port response : Response -> Cmd msg
+port response : OutgoingResponse -> Cmd msg
 
 
 main =
@@ -29,10 +29,10 @@ main =
     }
 
 
-handleRequest : Request -> Cmd Response
+handleRequest : Request -> Cmd OutgoingResponse
 handleRequest req =
   router req
-    |> Task.perform (fail req.id) identity
+    |> Task.perform (fail req.id) (success req.id)
 
 
 router : Router
@@ -44,26 +44,31 @@ router =
     ]
 
 
-fail : RequestId -> x -> Response
+fail : RequestId -> x -> OutgoingResponse
 fail id error =
-  Response id "500"
+  toOutgoingResponse id <| Response.ServerError "500" Nothing
+
+
+success : RequestId -> Response -> OutgoingResponse
+success id res =
+  toOutgoingResponse id res
 
 
 start : RouteHandler
 start req params =
-  Task.succeed (Response req.id "welcome!")
+  Task.succeed (Response.Ok "welcome!" Nothing)
 
 
 article : RouteHandler
 article req params =
   getArticle (Dict.get "article_id" params)
-  `andThen` (\article -> Task.succeed (Response req.id article))
-  `onError` (\_ -> Task.succeed (Response req.id "404"))
+  `andThen` (\article -> Task.succeed (Response.Ok article Nothing))
+  `onError` (\_ -> Task.succeed (Response.NotFound "404" Nothing))
 
 
 notFound : RouteHandler
 notFound req params =
-  Task.succeed (Response req.id "custom 404")
+  Task.succeed (Response.NotFound "custom 404" Nothing)
 
 
 apiBase : String
@@ -79,12 +84,12 @@ getArticle id =
       |> Task.mapError HttpError
 
 
-update : Cmd Response -> Model -> (Model, Cmd (Cmd Response))
+update : Cmd OutgoingResponse -> Model -> (Model, Cmd (Cmd OutgoingResponse))
 update res model =
   (model, Cmd.map response res)
 
 
-subscriptions : Model -> Sub (Cmd Response)
+subscriptions : Model -> Sub (Cmd OutgoingResponse)
 subscriptions model =
   request handleRequest
 

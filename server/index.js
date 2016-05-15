@@ -34,9 +34,13 @@ module.exports = (env) => {
   const generateId = idGenerator();
 
   elmServer.ports.response.subscribe((response) => {
-    reqs[response.id].res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    reqs[response.id].res.write(String(response.body));
-    reqs[response.id].res.end();
+    var res = reqs[response.id].res;
+
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.statusCode = response.statusCode;
+    res.write(String(response.body));
+    res.end();
+
     delete reqs[response.id];
   });
 

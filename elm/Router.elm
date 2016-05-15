@@ -52,7 +52,7 @@ matchRoute req pattern =
 doRoute : Request -> Maybe Route -> Task () Response
 doRoute req route =
   case route of
-    Nothing -> Task.succeed (Response req.id "404")
+    Nothing -> Task.succeed (Response.NotFound "404" Nothing)
     Just (pattern, callback) -> callback req (createParams req pattern)
 
 
