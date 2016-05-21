@@ -48,13 +48,8 @@ createRouteRegex pattern =
 
 matchRoute : Request -> Route -> Bool
 matchRoute req (method, pattern, _) =
-  let
-    methodMatch = matchMethod method req.method
-    routeRegex = createRouteRegex pattern
-  in
-    case methodMatch of
-      True -> Regex.contains routeRegex req.url.path
-      False -> False
+  matchMethod method req.method
+    && Regex.contains (createRouteRegex pattern) req.url.path
 
 
 matchMethod : Method -> String -> Bool
