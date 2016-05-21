@@ -31,8 +31,7 @@ type alias Params =
 
 router : Routes -> Router
 router routes req =
-  List.filter (matchRoute req) routes
-    |> List.head
+  find (matchRoute req) routes
     |> doRoute req
 
 
@@ -94,3 +93,11 @@ definitively = List.filterMap identity
 
 zip : List a -> List b -> List (a, b)
 zip = List.map2 (,)
+
+
+-- Get the first matching element of a list. Should be more lazy than filter
+find : (a -> Bool) -> List a -> Maybe a
+find predicate list =
+  case list of
+    [] -> Nothing
+    head::tail -> if predicate head then Just head else find predicate tail
