@@ -24,9 +24,9 @@ handleRequest req =
 router : Router
 router =
   Router.router
-    [ ("/", start)
-    , ("/a/{article_id}", article)
-    , (".*", notFound)
+    [ (Router.GET, "/", start)
+    , (Router.GET, "/a/{article_id}", article)
+    , (Router.GET, ".*", notFound)
     ]
 
 

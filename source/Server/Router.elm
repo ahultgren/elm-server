@@ -14,7 +14,10 @@ type alias Routes =
   List Route
 
 type alias Route =
-  (String, RouteHandler)
+  (Method, String, RouteHandler)
+
+type Method =
+  GET | POST | PUT | DELETE | OPTIONS | ALL
 
 type alias RouteHandler =
   Request -> Params -> Task Error Response
@@ -28,7 +31,7 @@ type alias Params =
 
 router : Routes -> Router
 router routes req =
-  List.filter (matchRoute req << fst) routes
+  List.filter (matchRoute req) routes
     |> List.head
     |> doRoute req
 
@@ -43,12 +46,26 @@ createRouteRegex pattern =
   regex ("^" ++ (Regex.replace Regex.All paramRegex (\{match} -> "([^/]+)") pattern) ++ "$")
 
 
-matchRoute : Request -> String -> Bool
-matchRoute req pattern =
+matchRoute : Request -> Route -> Bool
+matchRoute req (method, pattern, _) =
   let
+    methodMatch = matchMethod method req.method
     routeRegex = createRouteRegex pattern
   in
-    Regex.contains routeRegex req.url.path
+    case methodMatch of
+      True -> Regex.contains routeRegex req.url.path
+      False -> False
+
+
+matchMethod : Method -> String -> Bool
+matchMethod targetMethod requestMethod =
+  case targetMethod of
+    ALL -> True
+    GET -> requestMethod == "GET"
+    POST -> requestMethod == "POST"
+    PUT -> requestMethod == "PUT"
+    DELETE -> requestMethod == "DELETE"
+    OPTIONS -> requestMethod == "OPTIONS"
 
 
 -- TODO ErrorRoute fallback? Error -> Route. And a way to create empty params
@@ -56,7 +73,7 @@ doRoute : Request -> Maybe Route -> Task Error Response
 doRoute req route =
   case route of
     Nothing -> Task.succeed (Response.NotFound "404" Nothing)
-    Just (pattern, callback) -> callback req (createParams req pattern)
+    Just (_, pattern, callback) -> callback req (createParams req pattern)
 
 
 createParams : Request -> String -> Params
