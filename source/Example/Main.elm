@@ -3,6 +3,7 @@ module Example exposing (..)
 
 import Task exposing (Task, andThen, onError)
 import Dict
+import Json.Decode exposing ((:=), decodeString, at)
 
 import Server
 import Request exposing (Request, RequestId)
@@ -40,8 +41,9 @@ start req params =
 
 article : RouteHandler
 article req params =
-  getArticle (Dict.get "article_id" params)
-  `andThen` (\article -> Task.succeed (Response.Ok article Nothing))
+  Task.map
+    (\article -> Response.Ok (renderArticle article) Nothing)
+    (getArticle (Dict.get "article_id" params))
   `onError` (\_ -> Task.succeed (Response.NotFound "404" Nothing))
 
 
@@ -52,12 +54,32 @@ notFound req params =
 
 apiBase : String
 apiBase =
-  "http://api.omni.se/v2"
+  "http://localhost:5000/v2"
 
 
-getArticle : Maybe String -> Task RequestError String
+getArticle : Maybe String -> Task RequestError (Result String Article)
 getArticle id =
   case id of
     Nothing -> Task.fail (ParamError "No such article")
     Just id -> Http.get (apiBase ++ "/articles/" ++ id)
+      |> Task.map parseArticle
       |> Task.mapError HttpError
+
+
+type alias Article =
+  { id : String
+  , title : String
+  }
+
+parseArticle : String -> Result String Article
+parseArticle json =
+  decodeString (Json.Decode.object2 Article
+    (at ["article", "id"] Json.Decode.string)
+    (at ["article", "title"] Json.Decode.string)) json
+
+
+renderArticle : Result x Article -> String
+renderArticle result =
+  case result of
+    Err _ -> "parsing error"
+    Ok article -> article.id ++ " : " ++ article.title
