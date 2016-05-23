@@ -20,7 +20,7 @@ type Method =
   GET | POST | PUT | DELETE | OPTIONS | ALL
 
 type alias RouteHandler =
-  Request -> Params -> Task Error Response
+  Params -> Router
 
 type alias Error =
   String -- TODO More useful error type
@@ -29,8 +29,8 @@ type alias Params =
   Dict String String
 
 
-router : Routes -> Router
-router routes req =
+router : Routes -> Params -> Router
+router routes params req =
   find (matchRoute req) routes
     |> doRoute req
 
@@ -67,7 +67,7 @@ doRoute : Request -> Maybe Route -> Task Error Response
 doRoute req route =
   case route of
     Nothing -> Task.succeed (Response.NotFound "404" Nothing)
-    Just (_, pattern, callback) -> callback req (createParams req pattern)
+    Just (_, pattern, callback) -> callback (createParams req pattern) req
 
 
 createParams : Request -> String -> Params

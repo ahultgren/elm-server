@@ -25,7 +25,7 @@ apiBase =
 
 
 article : RouteHandler
-article req params =
+article params req =
   Task.map
     (\article -> Response.Ok (renderArticle article) Nothing)
     (getArticle (Dict.get "article_id" params))

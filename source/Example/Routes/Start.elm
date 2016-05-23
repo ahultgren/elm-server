@@ -8,5 +8,5 @@ import Router exposing (RouteHandler)
 
 
 start : RouteHandler
-start req params =
+start params req =
   Task.succeed (Response.Ok "welcome!" Nothing)
