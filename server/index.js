@@ -12,6 +12,7 @@ const simpleUrl = (url) => {
     pathname: urlObject.pathname,
     search: urlObject.search,
     path: urlObject.path,
+    originalPath: null,
     // query: urlObject.query, need dict support
   };
 };

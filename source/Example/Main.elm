@@ -7,7 +7,7 @@ import Task exposing (Task, andThen, onError)
 import Server
 import Request exposing (Request, RequestId)
 import Response exposing (Response, OutgoingResponse, toOutgoingResponse)
-import Router exposing (Router, RouteHandler)
+import Router exposing (Router, RouteHandler, get, use)
 
 import Routes.Article exposing (article)
 import Routes.Start exposing (start)
@@ -25,14 +25,13 @@ handleRequest req =
 router : Router
 router =
   Router.router
-    [ (Router.GET, "/", start)
-    , (Router.GET, "/a/{article_id}", article)
-    -- TODO Router.USE for matching start of path?
-    , (Router.GET, "/test/.*", Router.router
-      [ (Router.GET, "/a", testA)
-      , (Router.GET, "/b", testB)
+    [ get "/" start
+    , get "/a/{article_id}" article
+    , use "/test" (Router.router
+      [ get "/a" testA
+      , get "/b" testB
       ])
-    , (Router.GET, ".*", notFound)
+    , get ".*" notFound
     ]
     Dict.empty
 
@@ -44,7 +43,7 @@ notFound params req =
 
 testA : RouteHandler
 testA params req =
-  Task.succeed (Response.Ok "testA" Nothing)
+  Task.succeed (Response.Ok (Maybe.withDefault "" req.url.originalPath ++ " -> " ++ req.url.path) Nothing)
 
 testB : RouteHandler
 testB params req =

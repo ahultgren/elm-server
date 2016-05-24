@@ -14,10 +14,13 @@ type alias Routes =
   List Route
 
 type alias Route =
-  (Method, String, RouteHandler)
+  (Method, Pattern, RouteHandler)
+
+type alias Pattern =
+  String
 
 type Method =
-  GET | POST | PUT | DELETE | OPTIONS | ALL
+  GET | POST | PUT | DELETE | OPTIONS | ALL | USE
 
 type alias RouteHandler =
   Params -> Router
@@ -27,6 +30,36 @@ type alias Error =
 
 type alias Params =
   Dict String String
+
+
+all : Pattern -> RouteHandler -> Route
+all path callback =
+  (ALL, path, callback)
+
+use : Pattern -> RouteHandler -> Route
+use path callback =
+  (USE, path, callback)
+
+get : Pattern -> RouteHandler -> Route
+get path callback =
+  (GET, path, callback)
+
+post : Pattern -> RouteHandler -> Route
+post path callback =
+  (POST, path, callback)
+
+put : Pattern -> RouteHandler -> Route
+put path callback =
+  (PUT, path, callback)
+
+delete : Pattern -> RouteHandler -> Route
+delete path callback =
+  (DELETE, path, callback)
+
+options : Pattern -> RouteHandler -> Route
+options path callback =
+  (OPTIONS, path, callback)
+
 
 
 router : Routes -> Params -> Router
@@ -40,20 +73,25 @@ paramRegex =
   regex "\\{([^/{}]+?)\\}"
 
 
-createRouteRegex : String -> Regex
-createRouteRegex pattern =
-  regex ("^" ++ (Regex.replace Regex.All paramRegex (\{match} -> "([^/]+)") pattern) ++ "$")
+createRouteRegex : Method -> Pattern -> Regex
+createRouteRegex method pattern =
+  let
+    end = if method == USE then "" else "$"
+  in
+  regex ("^" ++ (Regex.replace Regex.All paramRegex (\{match} -> "([^/]+)") pattern) ++ end)
 
 
 matchRoute : Request -> Route -> Bool
 matchRoute req (method, pattern, _) =
   matchMethod method req.method
-    && Regex.contains (createRouteRegex pattern) req.url.path
+    && Regex.contains (createRouteRegex method pattern) req.url.path
 
 
 matchMethod : Method -> String -> Bool
 matchMethod targetMethod requestMethod =
   case targetMethod of
+    -- TODO when ports supports tagged unions, req.method should be a Method
+    USE -> True
     ALL -> True
     GET -> requestMethod == "GET"
     POST -> requestMethod == "POST"
@@ -67,18 +105,39 @@ doRoute : Request -> Maybe Route -> Task Error Response
 doRoute req route =
   case route of
     Nothing -> Task.succeed (Response.NotFound "404" Nothing)
-    Just (_, pattern, callback) -> callback (createParams req pattern) req
+    Just (method, pattern, callback) -> callback (createParams req method pattern) (updateSubrequest method pattern req)
 
 
-createParams : Request -> String -> Params
-createParams req pattern =
+createParams : Request -> Method -> Pattern -> Params
+createParams req method pattern =
   let
-    routeRegex = createRouteRegex pattern
+    routeRegex = createRouteRegex method pattern
     -- TODO Separate and dry this shit up
     names = definitively (List.concatMap .submatches (Regex.find Regex.All paramRegex pattern))
     values = definitively (List.concatMap .submatches (Regex.find Regex.All routeRegex req.url.path))
   in
     Dict.fromList (zip names values)
+
+
+updateSubrequest : Method -> Pattern -> Request -> Request
+updateSubrequest method pattern req =
+  let url = req.url in
+  case method of
+    USE -> { req
+           | url = { url
+                   | path = subPath method pattern url.path
+                   , originalPath = Just url.path
+                   }
+           }
+    _ -> req
+
+
+subPath : Method -> Pattern -> String -> String
+subPath method pattern path =
+  let
+    paramRegex = createRouteRegex method pattern
+  in
+    Regex.replace Regex.All paramRegex (\_ -> "") path
 
 
 -------------

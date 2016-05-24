@@ -11,6 +11,7 @@ type alias Url =
   , pathname : String
   , search : String
   , path : String
+  , originalPath : Maybe String
   -- , query : Dict String String -- need dict support
   }
 
