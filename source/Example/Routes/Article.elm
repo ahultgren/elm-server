@@ -5,6 +5,7 @@ import Http
 import Task exposing (Task, onError)
 import Json.Decode exposing ((:=), decodeString, at)
 
+import Config exposing (config)
 import Router exposing (RouteHandler)
 import Response
 
@@ -19,11 +20,6 @@ type RequestError =
   HttpError Http.Error | ParamError String
 
 
-apiBase : String
-apiBase =
-  "http://localhost:5000/v2"
-
-
 article : RouteHandler
 article params req =
   Task.map
@@ -36,7 +32,7 @@ getArticle : Maybe String -> Task RequestError (Result String Article)
 getArticle id =
   case id of
     Nothing -> Task.fail (ParamError "No such article")
-    Just id -> Http.get (apiBase ++ "/articles/" ++ id)
+    Just id -> Http.get (config.apiBase ++ "/articles/" ++ id)
       |> Task.map parseArticle
       |> Task.mapError HttpError
 
