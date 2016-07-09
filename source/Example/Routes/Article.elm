@@ -8,16 +8,13 @@ import Json.Decode exposing ((:=), decodeString, at)
 import Config exposing (config)
 import Router exposing (RouteHandler)
 import Response
+import Routes.Article.Decoder exposing (decodeArticleRoot, Article)
 
-
-type alias Article =
-  { id : String
-  , title : String
-  }
 
 
 type RequestError =
   HttpError Http.Error | ParamError String
+
 
 
 article : RouteHandler
@@ -39,13 +36,12 @@ getArticle id =
 
 parseArticle : String -> Result String Article
 parseArticle json =
-  decodeString (Json.Decode.object2 Article
-    (at ["article", "id"] Json.Decode.string)
-    (at ["article", "title"] Json.Decode.string)) json
+  decodeString decodeArticleRoot json
+    |> Result.map .article
 
 
 renderArticle : Result x Article -> String
 renderArticle result =
   case result of
     Err _ -> "parsing error"
-    Ok article -> article.id ++ " : " ++ article.title
+    Ok article -> article.id ++ " : " ++ article.title ++ " : " ++ toString article.resources
